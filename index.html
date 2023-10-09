@@ -1,0 +1,132 @@
+<style>
+    #bodyContainer {
+
+        width: 50%;
+        height: 65%;
+        background: #FFF0B6;
+        margin: auto;
+        border-radius: 10px;
+        text-align: center;
+        font-size: 20pt;
+    }
+
+    button {
+        background-color: #4CAF50;
+        /* Green */
+        border: none;
+        color: white;
+        padding: 15px 32px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        margin: 4px 2px;
+        cursor: pointer;
+        -webkit-transition-duration: 0.4s;
+        /* Safari */
+        transition-duration: 0.4s;
+    }
+
+
+
+    button:hover {
+        box-shadow: 0 12px 16px 0 rgba(0, 0, 0, 0.24), 0 17px 50px 0 rgba(0, 0, 0, 0.19);
+    }
+</style>
+
+<script>
+    alert("1- Sayfanin duzgun calisabilmesi icin Chrome kullanin                            2-Ayarlar kismindan 3. taraf cerezlerini engelle secenegi iptal edilmeli")
+
+
+</script>
+
+<div id="bodyContainer">Teachable Machine Audio Model </br>
+    <button type="button" onclick="init()">BASLA</button>
+
+    <div id="kutu" style="width:150px;height:150px;background-color:black;margin:auto"></div>
+    <div id="label-container"></div>
+
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js">
+</script>
+<script
+    src="https://cdn.jsdelivr.net/npm/@tensorflow-models/speech-commands@0.4.0/dist/speech-commands.min.js"></script>
+
+<script type="text/javascript">
+    // more documentation available at
+    // https://github.com/tensorflow/tfjs-models/tree/master/speech-commands
+
+    // the link to your model provided by Teachable Machine export panel
+    const URL = "https://teachablemachine.withgoogle.com/models/wdeIRGVi0/";
+
+
+    async function createModel() {
+        const checkpointURL = URL + "model.json"; // model topology
+        const metadataURL = URL + "metadata.json"; // model metadata
+
+        const recognizer = speechCommands.create(
+            "BROWSER_FFT", // fourier transform type, not useful to change
+            undefined, // speech commands vocabulary feature, not useful for your models
+            checkpointURL,
+            metadataURL);
+
+        // check that model and metadata are loaded via HTTPS requests.
+        await recognizer.ensureModelLoaded();
+
+        return recognizer;
+    }
+
+    async function init() {
+        const recognizer = await createModel();
+        const classLabels = recognizer.wordLabels(); // get class labels
+        const labelContainer = document.getElementById("label-container");
+        var blue, yellow, BackgroundNoise, orange, purple, red, green;
+        for (let i = 0; i < classLabels.length; i++) {
+            labelContainer.appendChild(document.createElement("div"));
+        }
+
+        // listen() takes two arguments:
+        // 1. A callback function that is invoked anytime a word is recognized.
+        // 2. A configuration object with adjustable fields
+        recognizer.listen(result => {
+            const scores = result.scores; // probability of prediction for each class
+            // render the probability scores per class
+            for (let i = 0; i < classLabels.length; i++) {
+                const classPrediction = classLabels[i] + ": " + result.scores[i].toFixed(2);
+                labelContainer.childNodes[i].innerHTML = classPrediction;
+
+            } BackgroundNoise = result.scores[0].toFixed(2);
+            orange = result.scores[1].toFixed(2);
+            purple = result.scores[2].toFixed(2);
+            yellow = result.scores[3].toFixed(2);
+            blue = result.scores[4].toFixed(2);
+            green = result.scores[5].toFixed(2);
+            red = result.scores[6].toFixed(2);
+            if (yellow > 0.70) {
+                document.getElementById("kutu").style.background = 'yellow';
+            }
+            else if (blue > 0.70) {
+                document.getElementById("kutu").style.background = '#0000FF';
+            } else if (orange > 0.70) {
+                document.getElementById("kutu").style.background = 'orange';
+            } else if (red > 0.70) {
+                document.getElementById("kutu").style.background = 'red';
+            } else if (green > 0.70) {
+                document.getElementById("kutu").style.background = 'green';
+            } else if (purple > 0.70) {
+                document.getElementById("kutu").style.background = 'purple';
+            }
+            else {
+                document.getElementById("kutu").style.background = 'white';
+            }
+        }, {
+            includeSpectrogram: true, // in case listen should return result.spectrogram
+            probabilityThreshold: 0.75,
+            invokeCallbackOnNoiseAndUnknown: true,
+            overlapFactor: 0.50 // probably want between 0.5 and 0.75. More info in README
+        });
+
+        // Stop the recognition in 5 seconds.
+        //setTimeout(() => recognizer.stopListening(), 5000);
+    }
+</script>
